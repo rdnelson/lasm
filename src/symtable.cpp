@@ -1,6 +1,9 @@
 #include "symtable.h"
 #include <iostream>
 #include <iomanip>
+#include "assert.h"
+#include "symtable-generated.hpp"
+
 
 namespace SymTable{
 void repr(){
@@ -54,9 +57,9 @@ int OpVars::size(){
 }
 
 auto_ptr<OpType> OpVars::get(int index){
-	auto_ptr<OpType> o(new OpType());
-	o->realign((instr[m_index].ptr + index));
-	return o;
+	auto_ptr<OpType> opvar(new OpType());
+	opvar->realign((instr[m_index].ptr + index));
+	return opvar;
 }
 
 OpType::OpType(){
@@ -81,6 +84,7 @@ void OpType::realign(inst_variant* ptr){
 
 
 unsigned char& OpType::operator[](int index){
-	if (m_ptr)
-		return m_ptr->pStart[index];
+	assert(m_ptr);
+	return m_ptr->pStart[index];
+
 }

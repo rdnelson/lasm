@@ -5,11 +5,13 @@
 #include "Nodes.h"
 #include "symtable.h"
 #include "common.h"
-#include "BinarySegment.hpp"
+#include "TextSegment.hpp"
 
 inline void decodeOperands(Operands& ops, Register** rs, Immediate** imms, Constant** consts, bool isMem[]);
 
-static std::string getSourceRepr(OpNode* ptr);
+inline int _generateIndexedRegisterEncoding(Register* regSrc, uint8_t* modrm, AccessWidth* aw_disp,bool* dispIsImmediate, bool* hasDisp, bool* zeroDisp, Immediate** dispSrc, Constant** constSrc);
+
+std::string getSourceRepr(OpNode* ptr);
 
 
 class p86Assembler{
@@ -18,7 +20,7 @@ class p86Assembler{
 		p86Assembler();
 		int parse(ExpressionList& pExprList);
 		unsigned int getStartingAddress();
-		vector<BinarySegment*>& getSegments();
+		vector<TextSegment*>& getSegments();
 
 	private:
 		int _handleOpNode(OpNode* op);
@@ -27,8 +29,8 @@ class p86Assembler{
 		bool _postpass();
 		void updateLocationMap(unsigned int startFrom, int increment);
 		int _construct(auto_ptr<OpType> pattern,OpNode* op, Operands& ops);
- 		void _addSeg(auto_ptr<BinarySegment> binseg);
-		vector<BinarySegment*> segs;	
+ 		void _addSeg(auto_ptr<TextSegment> binseg);
+		vector<TextSegment*> segs;	
 		unsigned int counter;
 		map<string,unsigned int> LocationMap;
 		unsigned int m_codeStart;	

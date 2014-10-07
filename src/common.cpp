@@ -1,5 +1,5 @@
 #include "common.h"
-
+#include "Logger.hpp"
 uint8_t parseDigit(char& digit){
 if (digit >= '0' && digit <= '9')
 	return  digit - 48;
@@ -21,10 +21,7 @@ void strToUpperCase(std::string& in)
 
 void trim(std::string& in, char toTrim){
 		 
-		in.erase(
-   		 remove( in.begin(), in.end(), toTrim ),
-   		 in.end()
-   		 );
+   		 std::remove( in.begin(), in.end(), toTrim );
 }
 char convlower(char in)
 {
@@ -42,3 +39,40 @@ char convupper(char in)
 }
 
 
+
+
+namespace detail {
+	static unsigned int ios_indent = std::ios_base::xalloc();
+};
+
+
+ostream& setIndent(ostream& ostreamInstance, unsigned int indentlevel)
+{
+	ostreamInstance.iword(detail::ios_indent) = indentlevel;
+	return ostreamInstance;
+}
+
+ostream& IncreaseIndent(ostream& ostreamInstance)
+{
+	ostreamInstance.iword(detail::ios_indent)++;
+	return ostreamInstance;
+}
+ostream& DecreaseIndent(ostream& ostreamInstance)
+{
+	if (ostreamInstance.iword(detail::ios_indent) > 0)
+	{
+		ostreamInstance.iword(detail::ios_indent)--;
+	}
+	return ostreamInstance;
+
+}
+
+ostream& Indent(ostream& streamInstance)
+{
+	for(unsigned int i = 0; i < streamInstance.iword(detail::ios_indent); i++)
+	{
+		streamInstance << '\t';
+	}
+	
+	return streamInstance;
+}

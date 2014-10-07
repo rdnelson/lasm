@@ -1,26 +1,27 @@
-CP:=cp
-MKDIR:=mkdir -p
-QMAKE:=qmake
-RM:=rm
+QMAKE=qmake
+MKDIR=mkdir -p
+CD=cd
+MAKE=make
+CP=cp -r
+RM=rm -rf
+MV=mv
 
-.PHONY: all
-.PHONY: clean
+.PHONY: all clean
 
-
-all: lasm gui
-
-lasm:
-	$(MAKE) -C src/ all
-	$(MKDIR) bin/
-	$(CP) src/lasm bin/lasm
-
-gui:
-	$(QMAKE) -makefile -o lasm-gui/Makefile lasm-gui/lasm-gui.pro
-	$(MAKE) -C lasm-gui/ all
-	$(CP) lasm-gui/lasm-gui bin/lasm-gui
+all: lasm.pro
+	$(MKDIR) build
+	$(CD) build; $(QMAKE) ..
+	$(MAKE) -C build all
+	$(MKDIR) bin
+	$(CP) build/lasm-gui/bin/* ./bin
+	$(CP) build/src/bin/* ./bin
+ifeq (Darwin, $(shell uname -s))
+	$(MV) ./bin/lasm ./bin/lasm-gui.app/Contents/MacOS/
+	$(MV) ./bin/lasm_debug ./bin/lasm-gui_debug.app/Contents/MacOS/
+endif
 
 clean:
-	$(MAKE) -C src/ clean
-	$(MAKE) -C lasm-gui/ clean
-	$(RM) bin/*
-
+	$(MAKE) -C build clean
+	$(RM) src/symtable-generated.hpp
+	$(RM) src/p86asm.l
+	${RM} build bin

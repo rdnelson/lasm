@@ -1,9 +1,8 @@
 #include "data.h"
 
-#ifndef VS2010
+#ifndef _MSC_VER
 #define toupper std::toupper
 #else
-#define toupper(a) ((a >= 'a' && a <= 'z') ? (a - 'a' + 'A') : a)
 #define snprintf(a, b, c, ...) _snprintf_s(a, b, b, c, __VA_ARGS__)
 #endif
 
@@ -26,7 +25,7 @@ void Operand::setAccessMode(AccessMode am){
 Register::RegLookupMap Register::m_regmap(Register::_populate());
 //default constructor.
 
-Register::Register(): reg(0xFF),m_regtype(0), m_regname(),m_ptrOffset(NULL), m_isIndexBase(false)
+Register::Register(): reg(0xFF),m_regtype(0), m_regname(), m_isIndexBase(false),m_ptrOffset(NULL)
 {
 }
 
@@ -34,7 +33,7 @@ Register::Register(): reg(0xFF),m_regtype(0), m_regname(),m_ptrOffset(NULL), m_i
 
 //extended constructor. Consumes a regname and an accessmode.
 Register::Register(char* pRegName, AccessMode accessmode): 
-reg(0xFF), m_regtype(0),m_regname(),m_ptrOffset(NULL), m_isIndexBase(false)
+reg(0xFF), m_regtype(0),m_regname(), m_isIndexBase(false),m_ptrOffset(NULL)
 
 {
 //create the LUT for regtypes. Really should make this static.
@@ -64,31 +63,53 @@ std::string& Register::getRegName(){
 
 }
 //prints a representation of the register to clog.
-void Register::repr(int indentlevel){
-	std::string indenter(indentlevel, '\t');
-	clog << indenter << "<Register>" << endl;
-	clog << indenter << "\t<address>"<< hex2str(&reg,1) << "</address>" << endl;
-	clog << indenter << "\t<name>" << m_regname << "</name>" <<  endl;
-	//clog << indenter << "\t<accessmode>" << accessmodeLUT[(uint8_t)Operand::getAccessMode()] << "</accessmode>" << endl;
-	if (Operand::getAccessMode() == REG_OFFSET)
+ostream& Register::repr(ostream& stream)
+{
+	stream << Indent << "<Register>" << endl;
+	stream << IncreaseIndent;
+	stream << Indent << "<address>"<< std::hex << reg << "</address>" << endl;
+	stream << Indent << "<name>" << m_regname << "</name>" <<  endl;
+
+	if (m_am == REG_OFFSET)
 	{
-		clog << indenter << "\t<offset>" << endl;
-		Operands* ops =  getOffsetPtr();
-		for (int i =0;i < ops->size();i++){
-			ops->at(i)->repr(indentlevel + 1);
+		stream << Indent << "<offset>" << endl;
+		stream << IncreaseIndent;
+
+		Operands* ops =  m_ptrOffset;
+		for (unsigned int i =0;i < ops->size();i++)
+		{
+			/*switch(ops->at(i)->getAccessMode())
+			{
+				
+				stream << *((Register*)ops->at(i));
+				break;
+
+				case IMMEDIATE:
+				case IMMEDIATE_ADDR:
+				stream << *((Immediate*)ops->at(i));
+				break;
+
+				case CONST:
+				case CONST_ADDR:
+				stream << *((Constant*)ops->at(i));
+				break;
+			}*/
+				stream << *(ops->at(i));
 		}
-		clog << indenter << "\t</offset>" << endl;
+		stream << DecreaseIndent;
+		stream << Indent << "</offset>" << endl;
 	}
-	clog << indenter << "\t<type>" << regtypeLUT[m_regtype] <<  "</type>"<< endl;
-	clog << indenter << "</Register>" << endl;
+	stream << Indent << "<type>" << regtypeLUT[m_regtype] <<  "</type>"<< endl;
+	stream << DecreaseIndent;
+	stream << Indent << "</Register>" << endl;
+	return stream;
 }
 
 
 //returns a binary representation of the register.
 uint8_t Register::parseRegString(std::string& str){
 //convert string to uppercase.
-for (int i=0;i<str.size();i++)
-		str[i] = toupper(str[i]);
+	strToUpperCase(str);
 //if the register is not in memory,i.e invalid combination such as "AI" or "SX"
 if (m_regmap.find(str) == m_regmap.end())
 {
@@ -106,7 +127,7 @@ if (str.at(1) == 'H' || (str.at(1) == 'L' ))
 	m_aw = AW_8BIT;
 else
 	m_aw = AW_16BIT;
-if ((m_regtype == REG_SP) &&( m_regmap[str] > 0x04) || (str.compare("BX") == 0))
+if (((m_regtype == REG_SP) && ( m_regmap[str] > 0x04)) || (str.compare("BX") == 0))
 	m_isIndexBase = true;
 
 return m_regmap[str];
@@ -168,13 +189,14 @@ Constant::Constant(char* pName){
 };
 
 
-void Constant::repr(int indentlevel){
-	std::string indenter(indentlevel, '\t');
-	clog << indenter << "<Constant>" << endl;
-	clog << indenter << "\t<name>" << m_name << "</name>" <<  endl;
-//	clog << indenter << "\t<accessmode>" << accessmodeLUT[((uint8_t)Operand::getAccessMode()) >> 4] << "</accessmode>" << endl;
-
-	clog << indenter << "</Constant>" << endl;
+ostream& Constant::repr(ostream& stream)
+{
+	stream << Indent << "<Constant>" << endl;
+	stream << IncreaseIndent;
+	stream << Indent << "<name>"  << m_name << "</name>" <<  endl;
+	stream << DecreaseIndent;
+	stream << Indent <<"</Constant>" << endl;
+	return stream;
 }
 
 std::string& Constant::getName(){

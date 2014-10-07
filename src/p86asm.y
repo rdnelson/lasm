@@ -1,27 +1,29 @@
 %{
 	#include <string.h>
 	#include <stdlib.h>
-	#include <cstddef>
 	#include <vector>
 	#include "data.h"
 	#include "Nodes.h"
 	ExpressionList* pList;
 	using namespace std;
 
-	#ifdef VS2010
+	#ifdef _MSC_VER
 	extern FILE* yyin;
 	extern int yylineno;
+	extern int yynerrs;
 	#endif
 
 	extern "C"
 	{
-	#ifndef VS2010
+	#ifndef _MSC_VER
 		extern FILE *yyin;
 		extern int yylineno;
+		extern int yynerrs;
 	#endif
 		int yyparse(void);
 		void yyerror(const char *str);
 		int yylex(void);
+		int err_count();
 		int yywrap(){
 
 
@@ -29,7 +31,9 @@
 		}
 	}
 
-
+	int err_count(){
+		return yynerrs;
+	}
 	
 
 	void yyerror(const char *str)
@@ -108,10 +112,13 @@
 					
 					free($<pStr>2);
 					if ($<pStr>1)
-				 	pControl->setKey($<pStr>1);
+					{
+						pControl->setKey($<pStr>1);
+						free($<pStr>1);		
+					}
+					free($<pListOperands>3);
 					pControl->setLineNumber(yylineno);
 					$<pExpr>$ = pControl;
-
 					
 				}
 				;
@@ -179,6 +186,7 @@
 					Operands* p2 =$<pListOperands>3;
 					if (p2->at(0) && (p2->size() == 1))
 						p1->push_back(p2->at(0));
+					free(p2);
 					$<pListOperands>$ = p1;
 				}
 				|
@@ -227,8 +235,9 @@
 					pOffsetList->push_back(pList->at(1));
 					((Register*) pList->at(0))->setOffsetPtr(pOffsetList);
 					pList->pop_back();
-					
+					free(pOffsetList);
 					$<pListOperands>$ = pList;
+
 				}
  				|
 				LSQBR operand PLUS operand PLUS operand RSQBR
